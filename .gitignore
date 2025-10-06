@@ -1,0 +1,7 @@
+__pycache__/*
+backup/*
+input_videos/*
+results_v1/*.mp4
+results_v1/*.png
+yolov8x-pose.pt
+.DS_Store
