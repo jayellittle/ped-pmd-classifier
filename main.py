@@ -8,7 +8,11 @@ from ultralytics import YOLO
 from collections import defaultdict
 
 
-from analysis import calculate_trajectory_straightness_ratio, calculate_y_dist_to_line
+from analysis import (
+    calculate_trajectory_frequency,
+    calculate_trajectory_straightness_ratio,
+    calculate_y_dist_to_line,
+)
 from config import CONFIDENCE_THRESHOLD, INPUT_DIR, MIN_TRAJECTORY_LEN, OUTPUT_DIR
 from visualization import draw_head_line, draw_head_trajectory, draw_skeleton
 
@@ -119,6 +123,9 @@ def process_videos():
                 straightness_ratio = calculate_trajectory_straightness_ratio(
                     data["head_positions"]
                 )
+                freq_features = calculate_trajectory_frequency(
+                    data["head_positions"], fps
+                )
 
                 analysis_results.append(
                     {
@@ -127,6 +134,8 @@ def process_videos():
                         "y_var": y_var,
                         "y_std": y_std,
                         "straightness_ratio": straightness_ratio,
+                        "dominant_freq": freq_features["dominant_freq"],
+                        "walking_band_energy": freq_features["walking_band_energy"],
                     }
                 )
 

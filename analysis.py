@@ -1,6 +1,7 @@
 # pyright: basic
 
 import numpy as np
+from scipy.fft import fft, fftfreq
 
 
 def calculate_y_dist_to_line(head_positions):
@@ -51,3 +52,54 @@ def calculate_trajectory_straightness_ratio(head_positions):
     ratio = actual_distance / straight_distance
 
     return ratio
+
+
+def calculate_trajectory_frequency(head_positions, fps):
+    if len(head_positions) < 15 or fps == 0:
+        return {"dominant_freq": 0.0, "walking_band_energy": 0.0}
+
+    # Detrended Y Signal
+    start_point = head_positions[0]
+    end_point = head_positions[-1]
+    x_start, y_start = start_point
+    x_end, y_end = end_point
+
+    detrended_y = []
+    if abs(x_end - x_start) < 1e-6:  # Case of vertical movement
+        y_coords = [p[1] for p in head_positions]
+        detrended_y = np.diff(y_coords)
+    else:
+        # y = mx + c
+        m = (y_end - y_start) / (x_end - x_start)
+        c = y_start - m * x_start
+        for point in head_positions:
+            x_i, y_i = point
+            y_line = m * x_i + c
+            detrended_y.append(y_i - y_line)
+
+    if len(detrended_y) == 0:
+        return {"dominant_freq": 0.0, "walking_band_energy": 0.0}
+
+    # FFT
+    N = len(detrended_y)
+    yf = fft(np.array(detrended_y))
+    xf = fftfreq(N, 1 / fps)  # Hz
+
+    # Frequency Spectrum Analysis　(Positive Only)
+    yf_positive = 2.0 / N * np.abs(yf[0 : N // 2])
+    xf_positive = xf[0 : N // 2]
+
+    # Feature Extraction
+    # (a) Dominant Frequency: Search peaks (Except slow movements under 1Hz)
+    try:
+        relevant_indices = np.where(xf_positive >= 1.0)
+        peak_index = np.argmax(yf_positive[relevant_indices])
+        dominant_freq = xf_positive[relevant_indices][peak_index]
+    except ValueError:
+        dominant_freq = 0.0  # No peak
+
+    # (b) Walking Band Energy: Around 1~3Hz
+    walking_band_indices = np.where((xf_positive >= 1.0) & (xf_positive <= 3.0))
+    walking_band_energy = np.sum(yf_positive[walking_band_indices] ** 2)
+
+    return {"dominant_freq": dominant_freq, "walking_band_energy": walking_band_energy}
