@@ -3,5 +3,6 @@ backup/*
 video_inputs/*
 results/**/*.mp4
 results/**/*.png
+results/**/*.md
 yolov8x-pose.pt
 .DS_Store

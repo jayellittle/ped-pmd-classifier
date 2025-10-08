@@ -74,7 +74,7 @@ def perform_clustering(csv_path):
     plt.show()
 
     output_csv_path = f"{ANALYSIS_DIR}/kmeans_results.csv"
-    df.to_csv(output_csv_path, index=False, encoding="utf-8-sig")
+    df.to_csv(output_csv_path, index=False, encoding="utf-8")
     print(f"Clustering results with labels saved to '{output_csv_path}'")
 
 

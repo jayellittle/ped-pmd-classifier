@@ -151,9 +151,7 @@ def process_videos():
 
     if analysis_results:
         df = pd.DataFrame(analysis_results)
-        df.to_csv(
-            f"{ANALYSIS_DIR}/analysis_results.csv", index=False, encoding="utf-8-sig"
-        )
+        df.to_csv(f"{ANALYSIS_DIR}/analysis_results.csv", index=False, encoding="utf-8")
         print(
             f"All feature data saved to 'analysis_results.csv'. ({len(analysis_results)} records)"
         )
