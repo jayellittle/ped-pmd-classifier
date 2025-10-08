@@ -1,8 +1,8 @@
 # pyright: basic
 
-INPUT_DIR = "input_videos"
-OUTPUT_DIR = "results_v1"
-KMEANS_DIR = "results_v1"
+INPUT_DIR = "video_inputs"
+OUTPUT_DIR = "results/v2/video_outputs"
+KMEANS_DIR = "results/v2"
 
 CONFIDENCE_THRESHOLD = 0.5
 
