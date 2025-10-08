@@ -8,7 +8,7 @@ from sklearn.cluster import KMeans
 
 from config import ANALYSIS_DIR
 
-FEATURE_1 = "y_std"
+FEATURE_1 = "walking_band_energy"
 FEATURE_2 = "straightness_ratio"
 
 
@@ -65,8 +65,8 @@ def perform_clustering(csv_path):
     plt.legend(title="Cluster")
     plt.grid(True)
 
-    plt.yscale("log")
-    plt.title("Clustering Result (Y-axis in Log Scale)", fontsize=16)
+    # plt.yscale("log")
+    # plt.title("Clustering Result (Y-axis in Log Scale)", fontsize=16)
 
     output_image_path = f"{ANALYSIS_DIR}/kmeans_result.png"
     plt.savefig(output_image_path)
