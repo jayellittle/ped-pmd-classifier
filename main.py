@@ -13,7 +13,13 @@ from analysis import (
     calculate_trajectory_straightness_ratio,
     calculate_y_dist_to_line,
 )
-from config import CONFIDENCE_THRESHOLD, INPUT_DIR, MIN_TRAJECTORY_LEN, OUTPUT_DIR
+from config import (
+    ANALYSIS_DIR,
+    CONFIDENCE_THRESHOLD,
+    INPUT_DIR,
+    MIN_TRAJECTORY_LEN,
+    OUTPUT_DIR,
+)
 from visualization import draw_head_line, draw_head_trajectory, draw_skeleton
 
 
@@ -145,7 +151,9 @@ def process_videos():
 
     if analysis_results:
         df = pd.DataFrame(analysis_results)
-        df.to_csv("analysis_results.csv", index=False, encoding="utf-8-sig")
+        df.to_csv(
+            f"{ANALYSIS_DIR}/analysis_results.csv", index=False, encoding="utf-8-sig"
+        )
         print(
             f"All feature data saved to 'analysis_results.csv'. ({len(analysis_results)} records)"
         )

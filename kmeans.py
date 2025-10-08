@@ -6,7 +6,7 @@ import seaborn as sns
 from sklearn.preprocessing import StandardScaler
 from sklearn.cluster import KMeans
 
-from config import KMEANS_DIR
+from config import ANALYSIS_DIR
 
 FEATURE_1 = "y_std"
 FEATURE_2 = "straightness_ratio"
@@ -68,15 +68,15 @@ def perform_clustering(csv_path):
     plt.yscale("log")
     plt.title("Clustering Result (Y-axis in Log Scale)", fontsize=16)
 
-    output_image_path = f"{KMEANS_DIR}/kmeans_result.png"
+    output_image_path = f"{ANALYSIS_DIR}/kmeans_result.png"
     plt.savefig(output_image_path)
     print(f"Clustering visualization saved to '{output_image_path}'")
     plt.show()
 
-    output_csv_path = f"{KMEANS_DIR}/kmeans_results.csv"
+    output_csv_path = f"{ANALYSIS_DIR}/kmeans_results.csv"
     df.to_csv(output_csv_path, index=False, encoding="utf-8-sig")
     print(f"Clustering results with labels saved to '{output_csv_path}'")
 
 
 if __name__ == "__main__":
-    perform_clustering(f"{KMEANS_DIR}/kmeans_input.csv")
+    perform_clustering(f"{ANALYSIS_DIR}/kmeans_input.csv")

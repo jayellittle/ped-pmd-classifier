@@ -2,7 +2,7 @@
 
 INPUT_DIR = "video_inputs"
 OUTPUT_DIR = "results/v2/video_outputs"
-KMEANS_DIR = "results/v2"
+ANALYSIS_DIR = "results/v2"
 
 CONFIDENCE_THRESHOLD = 0.5
 
