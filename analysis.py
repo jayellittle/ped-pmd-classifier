@@ -11,7 +11,7 @@ def calculate_y_dist_to_line(head_positions):
         return 0.0, 0.0
 
     start_point = head_positions[0]
-    end_point = head_positions[1]
+    end_point = head_positions[-1]
     x_start, y_start = start_point
     x_end, y_end = end_point
 
@@ -147,7 +147,7 @@ def calculate_arm_angle_variance(all_kpts, confidence_threshold=CONFIDENCE_THRES
             right_angle = calculate_angle(right_shoulder, right_elbow, right_wrist)
             all_detected_angles.append(right_angle)
 
-        if len(all_detected_angles) < 10:
-            return 0.0
+    if len(all_detected_angles) < 10:
+        return 0.0
 
-        return np.var(all_detected_angles)
+    return np.var(all_detected_angles)
