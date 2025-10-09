@@ -9,6 +9,7 @@ from collections import defaultdict
 
 
 from analysis import (
+    calculate_arm_angle_variance,
     calculate_trajectory_frequency,
     calculate_trajectory_straightness_ratio,
     calculate_y_dist_to_line,
@@ -54,7 +55,7 @@ def process_videos():
             output_video_path, fourcc, fps, (frame_width, frame_height)
         )
 
-        person_data = defaultdict(lambda: {"head_positions": []})
+        person_data = defaultdict(lambda: {"head_positions": [], "all_kpts": []})
 
         while cap.isOpened():
             success, frame = cap.read()
@@ -98,6 +99,8 @@ def process_videos():
                             (head_center_x, head_center_y)
                         )
 
+                        person_data[track_id]["all_kpts"].append(kpts)
+
                     # Draw head trajectory of people tracked
                     draw_head_trajectory(frame, person_data[track_id]["head_positions"])
 
@@ -132,6 +135,7 @@ def process_videos():
                 freq_features = calculate_trajectory_frequency(
                     data["head_positions"], fps
                 )
+                arm_var = calculate_arm_angle_variance(data["all_kpts"])
 
                 analysis_results.append(
                     {
@@ -140,8 +144,9 @@ def process_videos():
                         "y_var": y_var,
                         "y_std": y_std,
                         "straightness_ratio": straightness_ratio,
-                        "dominant_freq": freq_features["dominant_freq"],
+                        # "dominant_freq": freq_features["dominant_freq"],
                         "walking_band_energy": freq_features["walking_band_energy"],
+                        "arm_angle_var": arm_var,
                     }
                 )
 

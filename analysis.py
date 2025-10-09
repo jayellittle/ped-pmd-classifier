@@ -3,6 +3,8 @@
 import numpy as np
 from scipy.fft import fft, fftfreq
 
+from config import CONFIDENCE_THRESHOLD
+
 
 def calculate_y_dist_to_line(head_positions):
     if len(head_positions) < 3:
@@ -103,3 +105,49 @@ def calculate_trajectory_frequency(head_positions, fps):
     walking_band_energy = np.sum(yf_positive[walking_band_indices] ** 2)
 
     return {"dominant_freq": dominant_freq, "walking_band_energy": walking_band_energy}
+
+
+def calculate_angle(p1, p2, p3):
+    """Return angle on p2"""
+    v1 = np.array(p1[:2]) - np.array(p2[:2])
+    v2 = np.array(p3[:2]) - np.array(p2[:2])
+
+    dot_product = np.dot(v1, v2)
+    norm_product = np.linalg.norm(v1) * np.linalg.norm(v2)
+
+    if norm_product == 0:
+        return 0.0
+
+    cosine_angle = np.clip(dot_product / norm_product, -1.0, 1.0)
+    angle = np.arccos(cosine_angle)
+
+    return np.degrees(angle)
+
+
+def calculate_arm_angle_variance(all_kpts, confidence_threshold=CONFIDENCE_THRESHOLD):
+    all_detected_angles = []
+
+    for kpts in all_kpts:
+        left_shoulder, left_elbow, left_wrist = kpts[5], kpts[7], kpts[9]
+        right_shoulder, right_elbow, right_wrist = kpts[6], kpts[8], kpts[10]
+
+        if (
+            left_shoulder[2] > confidence_threshold
+            and left_elbow[2] > confidence_threshold
+            and left_wrist[2] > confidence_threshold
+        ):
+            left_angle = calculate_angle(left_shoulder, left_elbow, left_wrist)
+            all_detected_angles.append(left_angle)
+
+        if (
+            right_shoulder[2] > confidence_threshold
+            and right_elbow[2] > confidence_threshold
+            and right_wrist[2] > confidence_threshold
+        ):
+            right_angle = calculate_angle(right_shoulder, right_elbow, right_wrist)
+            all_detected_angles.append(right_angle)
+
+        if len(all_detected_angles) < 10:
+            return 0.0
+
+        return np.var(all_detected_angles)
