@@ -3,7 +3,7 @@
 import numpy as np
 from scipy.fft import fft, fftfreq
 
-from config import CONFIDENCE_THRESHOLD
+from config import CONFIDENCE_THRESHOLD, MIN_TRAJECTORY_LEN
 
 
 def calculate_y_dist_to_line(head_positions):
@@ -57,7 +57,7 @@ def calculate_trajectory_straightness_ratio(head_positions):
 
 
 def calculate_trajectory_frequency(head_positions, fps):
-    if len(head_positions) < 15 or fps == 0:
+    if len(head_positions) < MIN_TRAJECTORY_LEN or fps == 0:
         return {"dominant_freq": 0.0, "walking_band_energy": 0.0}
 
     # Detrended Y Signal
