@@ -66,7 +66,7 @@ def perform_clustering(csv_path):
     # plt.yscale("log")
     # plt.title("Clustering Result (Y-axis in Log Scale)", fontsize=16)
 
-    output_image_path = f"{ANALYSIS_DIR}/kmeans_result.png"
+    output_image_path = f"{ANALYSIS_DIR}/kmeans_results.png"
     plt.savefig(output_image_path)
     print(f"Clustering visualization saved to '{output_image_path}'")
     plt.show()
@@ -83,7 +83,7 @@ def perform_3d_clustering(csv_path):
         print(f"Error: Cannot find '{csv_path}'")
         return
 
-    features_to_use = ["walking_band_energy", "straightness_ratio", "arm_angle_var"]
+    features_to_use = ["straightness_ratio", "walking_band_energy", "arm_angle_var"]
     features = df[features_to_use]
 
     scaler = StandardScaler()
@@ -128,7 +128,7 @@ def perform_3d_clustering(csv_path):
     ax.set_zlabel(features_to_use[0], fontsize=12)
     ax.legend(*scatter.legend_elements(), title="Cluster")
 
-    output_image_path_3d = f"{ANALYSIS_DIR}/kmeans_3d_result.png"
+    output_image_path_3d = f"{ANALYSIS_DIR}/kmeans_result.png"
     plt.savefig(output_image_path_3d)
     print(f"3D Clustering visualization saved to '{output_image_path_3d}'")
     plt.show()
@@ -151,11 +151,11 @@ def perform_3d_clustering(csv_path):
     print(f"Pair Plot visualization saved to '{output_image_path_pair}'")
     plt.show()
 
-    output_csv_path = f"{ANALYSIS_DIR}/kmeans_3d_results.csv"
+    output_csv_path = f"{ANALYSIS_DIR}/kmeans_results.csv"
     df.to_csv(output_csv_path, index=False, encoding="utf-8")
     print(f"Clustering results with labels saved to '{output_csv_path}'")
 
 
 if __name__ == "__main__":
-    perform_clustering(f"{ANALYSIS_DIR}/kmeans_input.csv")
-    # perform_3d_clustering(f"{ANALYSIS_DIR}/kmeans_input.csv")
+    # perform_clustering(f"{ANALYSIS_DIR}/kmeans_input.csv")
+    perform_3d_clustering(f"{ANALYSIS_DIR}/kmeans_input.csv")
