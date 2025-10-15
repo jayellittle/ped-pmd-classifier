@@ -1,6 +1,6 @@
 # pyright: basic
 
-VERSION = "v4"
+VERSION = "v5"
 INPUT_DIR = "video_inputs"
 OUTPUT_DIR = f"results/{VERSION}/video_outputs"
 ANALYSIS_DIR = f"results/{VERSION}"
