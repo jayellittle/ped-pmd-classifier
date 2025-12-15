@@ -1,6 +1,7 @@
 # pyright: basic
 
 import numpy as np
+import pandas as pd
 from scipy.fft import fft, fftfreq
 
 from config import CONFIDENCE_THRESHOLD, MIN_TRAJECTORY_LEN
@@ -125,28 +126,69 @@ def calculate_angle(p1, p2, p3):
 
 
 def calculate_arm_angle_variance(all_kpts, confidence_threshold=CONFIDENCE_THRESHOLD):
+    """
+    관절 좌표에 선형 보간법(Linear Interpolation)을 적용한 후 팔 각도 분산을 계산합니다.
+    """
+    if not all_kpts or len(all_kpts) < MIN_TRAJECTORY_LEN:
+        return 0.0
+
+    # 1. 데이터를 Pandas DataFrame으로 변환하기 위해 리스트로 추출
+    data_list = []
+    for kpts in all_kpts:
+        # kpts shape: (17, 3) -> [x, y, conf]
+        row = {}
+        
+        # 왼쪽 팔 (Shoulder: 5, Elbow: 7, Wrist: 9)
+        row['l_sh_x'], row['l_sh_y'], row['l_sh_c'] = kpts[5]
+        row['l_el_x'], row['l_el_y'], row['l_el_c'] = kpts[7]
+        row['l_wr_x'], row['l_wr_y'], row['l_wr_c'] = kpts[9]
+        
+        # 오른쪽 팔 (Shoulder: 6, Elbow: 8, Wrist: 10)
+        row['r_sh_x'], row['r_sh_y'], row['r_sh_c'] = kpts[6]
+        row['r_el_x'], row['r_el_y'], row['r_el_c'] = kpts[8]
+        row['r_wr_x'], row['r_wr_y'], row['r_wr_c'] = kpts[10]
+        
+        data_list.append(row)
+
+    df = pd.DataFrame(data_list)
+
+    # 2. 신뢰도가 낮은 좌표를 NaN(결측치)으로 변경 (Masking)
+    # 관절별로 confidence 컬럼을 확인하여 좌표를 날림
+    joints = [
+        ('l_sh', 'l_sh_c'), ('l_el', 'l_el_c'), ('l_wr', 'l_wr_c'),
+        ('r_sh', 'r_sh_c'), ('r_el', 'r_el_c'), ('r_wr', 'r_wr_c')
+    ]
+    
+    for prefix, conf_col in joints:
+        mask = df[conf_col] < confidence_threshold
+        df.loc[mask, [f'{prefix}_x', f'{prefix}_y']] = np.nan
+
+    # 3. 선형 보간법 적용 (Interpolation)
+    # NaN으로 비어있는 구간을 앞뒤 값을 이용해 직선으로 채움
+    coord_cols = [c for c in df.columns if c.endswith('_x') or c.endswith('_y')]
+    df[coord_cols] = df[coord_cols].interpolate(method='linear', limit_direction='both')
+
+    # 4. 보간된 좌표로 각도 계산
     all_detected_angles = []
 
-    for kpts in all_kpts:
-        left_shoulder, left_elbow, left_wrist = kpts[5], kpts[7], kpts[9]
-        right_shoulder, right_elbow, right_wrist = kpts[6], kpts[8], kpts[10]
+    for _, row in df.iterrows():
+        # 왼쪽 팔 각도 계산
+        if not np.isnan(row['l_sh_x']) and not np.isnan(row['l_el_x']) and not np.isnan(row['l_wr_x']):
+            p1 = (row['l_sh_x'], row['l_sh_y'])
+            p2 = (row['l_el_x'], row['l_el_y'])
+            p3 = (row['l_wr_x'], row['l_wr_y'])
+            angle = calculate_angle(p1, p2, p3)
+            all_detected_angles.append(angle)
 
-        if (
-            left_shoulder[2] > confidence_threshold
-            and left_elbow[2] > confidence_threshold
-            and left_wrist[2] > confidence_threshold
-        ):
-            left_angle = calculate_angle(left_shoulder, left_elbow, left_wrist)
-            all_detected_angles.append(left_angle)
+        # 오른쪽 팔 각도 계산
+        if not np.isnan(row['r_sh_x']) and not np.isnan(row['r_el_x']) and not np.isnan(row['r_wr_x']):
+            p1 = (row['r_sh_x'], row['r_sh_y'])
+            p2 = (row['r_el_x'], row['r_el_y'])
+            p3 = (row['r_wr_x'], row['r_wr_y'])
+            angle = calculate_angle(p1, p2, p3)
+            all_detected_angles.append(angle)
 
-        if (
-            right_shoulder[2] > confidence_threshold
-            and right_elbow[2] > confidence_threshold
-            and right_wrist[2] > confidence_threshold
-        ):
-            right_angle = calculate_angle(right_shoulder, right_elbow, right_wrist)
-            all_detected_angles.append(right_angle)
-
+    # 데이터가 너무 적으면 0 반환
     if len(all_detected_angles) < 10:
         return 0.0
 
