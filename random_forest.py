@@ -25,13 +25,13 @@ FEATURES = [
 
 
 def evaluate_with_cv(features_to_use):
-    df = pd.read_csv("results/v5/kmeans_answers.csv")
+    df = pd.read_csv("results/v6/analysis_answer.csv")
 
     # 이상치 제거
     df = df[df["arm_angle_var"] > 0.0]
 
     X = df[features_to_use]
-    y = df["cluster"]
+    y = df["class"]
 
     # K-Fold Cross-Validation (K=5)
     cv = StratifiedKFold(n_splits=5, shuffle=True, random_state=42)
@@ -46,11 +46,11 @@ def evaluate_with_cv(features_to_use):
 
 
 def plot_learning_curve(features_to_use):
-    df = pd.read_csv("results/v5/kmeans_answers.csv")
+    df = pd.read_csv("results/v6/analysis_answer.csv")
     df = df[df["arm_angle_var"] > 0.0]
 
     X = df[features_to_use]
-    y = df["cluster"]
+    y = df["class"]
 
     model = RandomForestClassifier(n_estimators=100, random_state=42)
 
@@ -69,16 +69,16 @@ def plot_learning_curve(features_to_use):
     plt.title("Learning Curve")
     plt.legend()
     plt.grid(True)
-    plt.savefig("results/v5/learning_curve.png")
+    plt.savefig("results/v6/learning_curve.png")
     # plt.show()
 
 
 def test_multiple_splits(features_to_use):
-    df = pd.read_csv("results/v5/kmeans_answers.csv")
+    df = pd.read_csv("results/v6/analysis_answer.csv")
     df = df[df["arm_angle_var"] > 0.0]
 
     X = df[features_to_use]
-    y = df["cluster"]
+    y = df["class"]
 
     accuracies = []
 
@@ -122,24 +122,24 @@ def comprehensive_validation(features_to_use):
 
 def analyze_feature_importance(features_to_use):
     try:
-        df = pd.read_csv("results/v5/kmeans_answers.csv")
+        df = pd.read_csv("results/v6/analysis_answer.csv")
 
     except FileNotFoundError as e:
         print(f"Error: Cannot load file '{e.filename}'.")
         return
 
-    nan_rows = df[df["cluster"].isnull()]
+    nan_rows = df[df["class"].isnull()]
 
     if not nan_rows.empty:
-        print("--- 'cluster' 열에 결측치가 있는 행 ---")
+        print("--- 'class' 열에 결측치가 있는 행 ---")
         print(nan_rows)
         print("-" * 30)
     else:
-        print("--- 'cluster' 열에 결측치가 없습니다. ---")
+        print("--- 'class' 열에 결측치가 없습니다. ---")
         print("-" * 30)
 
     X = df[features_to_use]
-    y = df["cluster"]
+    y = df["class"]
 
     X_train, X_test, y_train, y_test = train_test_split(
         X, y, test_size=0.3, random_state=42, stratify=y
@@ -189,7 +189,7 @@ def analyze_feature_importance(features_to_use):
     plt.ylabel("Feature")
 
     plt.tight_layout()
-    plt.savefig("results/v5/random_forest_analysis.png")
+    plt.savefig("results/v6/random_forest_analysis.png")
     # plt.show()
 
     print("--- Feature Correlations ---")
@@ -201,10 +201,60 @@ def analyze_feature_importance(features_to_use):
     sns.heatmap(correlation_matrix, annot=True, cmap="coolwarm", center=0)
     plt.title("Feature Correlation Matrix")
     plt.tight_layout()
-    plt.savefig("results/v5/feature_correlation.png")
+    plt.savefig("results/v6/feature_correlation.png")
     # plt.show()
 
 
-if __name__ == "__main__":
-    analyze_feature_importance(FEATURES)
     comprehensive_validation(FEATURES)
+
+
+def test_all_combinations():
+    import itertools
+
+    df = pd.read_csv("results/v6/analysis_answer.csv")
+    
+    # 공정한 비교를 위해 모든 실험을 '모든 변수가 정상인 데이터'로 통일
+    # 만약 특정 조합에서는 전체 데이터를 쓰고 싶다면 별도 로직이 필요하지만,
+    # '변수의 성능'을 비교할 때는 데이터셋을 고정하는 것이 과학적입니다.
+    df_filtered = df[df["arm_angle_var"] > 0.0].copy()
+    y = df_filtered["class"]
+    
+    print(f"\n{'='*60}")
+    print(f"Feature Combination Analysis (Samples: {len(df_filtered)})")
+    print(f"{'='*60}")
+
+    results = []
+
+    # 1개부터 전체 개수까지 모든 조합 생성
+    for r in range(1, len(FEATURES) + 1):
+        for combo in itertools.combinations(FEATURES, r):
+            features = list(combo)
+            X = df_filtered[features]
+            
+            # CV 점수 계산
+            model = RandomForestClassifier(n_estimators=100, random_state=42)
+            cv = StratifiedKFold(n_splits=5, shuffle=True, random_state=42)
+            scores = cross_val_score(model, X, y, cv=cv, scoring="accuracy")
+            
+            mean_score = scores.mean()
+            std_score = scores.std()
+            
+            results.append({
+                "features": ", ".join(features),
+                "n_features": len(features),
+                "mean_accuracy": mean_score,
+                "std": std_score
+            })
+
+    # 결과 출력 (정확도 내림차순 정렬)
+    results_df = pd.DataFrame(results)
+    results_df = results_df.sort_values(by="mean_accuracy", ascending=False)
+
+    print(results_df.to_string(index=False, float_format="%.4f"))
+    print(f"{'='*60}\n")
+
+
+if __name__ == "__main__":
+    # analyze_feature_importance(FEATURES)
+    # comprehensive_validation(FEATURES)
+    test_all_combinations()
