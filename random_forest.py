@@ -254,7 +254,72 @@ def test_all_combinations():
     print(f"{'='*60}\n")
 
 
+def final_evaluation(features_to_use):
+    """
+    최적의 변수 조합으로 전체 데이터(0.0 포함)에 대해 최종 평가를 수행합니다.
+    """
+    print(f"\n{'='*60}")
+    print("FINAL EVALUATION WITH FULL DATASET")
+    print(f"Features: {features_to_use}")
+    print(f"{'='*60}")
+
+    df = pd.read_csv("results/v6/analysis_answer.csv")
+    
+    # 0.0 데이터를 포함한 전체 데이터 사용
+    X = df[features_to_use]
+    y = df["class"]
+
+    print(f"Total Samples: {len(df)}")
+    print(f"Pedestrian: {sum(y == 'Pedestrian')}, PMD: {sum(y == 'PMD')}")
+    print("-" * 30)
+
+    # 1. 5-Fold Cross Validation (전체 데이터에 대한 일반화 성능)
+    model = RandomForestClassifier(n_estimators=100, random_state=42)
+    cv = StratifiedKFold(n_splits=5, shuffle=True, random_state=42)
+    scores = cross_val_score(model, X, y, cv=cv, scoring="accuracy")
+
+    print(f"5-Fold CV Accuracy: {scores.mean():.4f} (+/- {scores.std():.4f})")
+    print("-" * 30)
+
+    # 2. Train/Test Split (7:3) - 상세 리포트 및 시각화용
+    X_train, X_test, y_train, y_test = train_test_split(
+        X, y, test_size=0.3, random_state=42, stratify=y
+    )
+    
+    model.fit(X_train, y_train)
+    y_pred = model.predict(X_test)
+    
+    acc = accuracy_score(y_test, y_pred)
+    cm = confusion_matrix(y_test, y_pred)
+    
+    print(f"Test Set Accuracy (30% hold-out): {acc:.4f}")
+    print("Confusion Matrix:")
+    print(cm)
+    
+    # 시각화
+    plt.figure(figsize=(6, 5))
+    sns.heatmap(
+        cm, 
+        annot=True, 
+        fmt="d", 
+        cmap="Blues",
+        xticklabels=["Pedestrian", "PMD"],
+        yticklabels=["Pedestrian", "PMD"]
+    )
+    plt.title(f"Final Model Confusion Matrix\n(Features: {', '.join(features_to_use)})")
+    plt.xlabel("Predicted")
+    plt.ylabel("Actual")
+    plt.tight_layout()
+    plt.savefig("results/v6/final_model_confusion_matrix.png")
+    print(f"Confusion matrix saved to results/v6/final_model_confusion_matrix.png")
+    print(f"{'='*60}\n")
+
+
 if __name__ == "__main__":
     # analyze_feature_importance(FEATURES)
     # comprehensive_validation(FEATURES)
-    test_all_combinations()
+    # test_all_combinations()
+    
+    # y_var과 walking_band_energy만 사용
+    OPTIMAL_FEATURES = ["y_var", "walking_band_energy"]
+    final_evaluation(OPTIMAL_FEATURES)
